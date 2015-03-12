@@ -76,7 +76,7 @@ namespace QualificationTask
 
                         var server = group.Servers
                             .Where(x => x.State == Server.StateEnum.NeedAnalyze)
-                            .OrderBy(x => x.Size)
+                            .OrderByDescending(x => x.Score)
                             .First();
 
                         int index = servers.ToList().IndexOf(server);
@@ -91,11 +91,6 @@ namespace QualificationTask
 
                         currentRow = (currentRow + 1) % rowsCount;
                     }
-                }
-
-                foreach (var server in servers.Where(x => x.State == Server.StateEnum.Unused).OrderBy(x => x.Score))
-                {
-                    var group = groups.ToList().IndexOf(server.Group);
                 }
 
                 foreach (var server in servers.OrderBy(x => x.Index))
@@ -113,7 +108,7 @@ namespace QualificationTask
             }
         }
 
-        private static bool FindServerPlace2(Server server, List<UnavailableCell> unAvailable, int slotsCount, int rowsCount)
+        private static bool FindServerPlace(Server server, List<UnavailableCell> unAvailable, int slotsCount, int rowsCount)
         {
             bool hasError = false;
 
@@ -127,52 +122,6 @@ namespace QualificationTask
             {
                 currentSlots[currentRow] = hasUnavailableCell.Slot + 1;
                 hasError = true;
-            }
-
-            if (currentSlots[currentRow] + server.Size > slotsCount) // Slot limit reached
-            {
-                currentRow++;
-                hasError = true;
-            }
-
-            if (hasError && currentRow >= rowsCount)
-            {
-                server.State = Server.StateEnum.Unused;
-                return false;
-            }
-
-            if (hasError)
-                return FindServerPlace(server, unAvailable, slotsCount, rowsCount);
-
-            // Could not place a server we check on next line or, next to unvavailable cell.
-            server.Row = currentRow;
-            server.Slot = currentSlots[currentRow];
-            server.State = Server.StateEnum.Used;
-
-            currentSlots[currentRow] += server.Size;
-            return true;
-        }
-
-        private static bool FindServerPlace(Server server, List<UnavailableCell> unAvailable, int slotsCount, int rowsCount)
-        {
-            bool hasError = false;
-
-            var hasUnavailableCell = (
-                from u in unAvailable
-                where u.Row == currentRow && currentSlots[currentRow] <= u.Slot && u.Slot < currentSlots[currentRow] + server.Size
-                select u)
-                .FirstOrDefault();
-
-            if (hasUnavailableCell != null) // Can not put a server because of unvavailability
-            {
-                currentRow++;
-                hasError = true;
-            }
-
-            if (hasError && currentRow >= rowsCount)
-            {
-                server.State = Server.StateEnum.Unused;
-                return false;
             }
 
             if (currentSlots[currentRow] + server.Size > slotsCount) // Slot limit reached

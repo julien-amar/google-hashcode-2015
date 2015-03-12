@@ -51,6 +51,7 @@
     <Compile Include="Extensions\ConsoleExtensions.cs" />
     <Compile Include="Extensions\Helpers.cs" />
     <Compile Include="IndexGenerator.cs" />
+    <Compile Include="Model\Group.cs" />
     <Compile Include="Model\Server.cs" />
     <Compile Include="Model\UnavailableCell.cs" />
     <Compile Include="Program.cs" />

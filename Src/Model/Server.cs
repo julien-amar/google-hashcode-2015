@@ -13,7 +13,7 @@ namespace QualificationTask.Model
             Index = index;
             Size = size;
             Capacity = capacity;
-            Unused = false;
+            Unused = true;
         }
 
         public int Index { get; set; }
@@ -22,6 +22,8 @@ namespace QualificationTask.Model
 
         public int Row { get; set; }
         public int Slot { get; set; }
+
+        public Group Group { get; set; }
 
         public bool Unused { get; set; }
 

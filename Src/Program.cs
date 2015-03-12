@@ -11,9 +11,8 @@ namespace QualificationTask
 {
     class Program
     {
-        private static int currentSlot = 0;
         private static int currentRow = 0;
-        private static int currentCpuInRow = 0;
+        private static int[] currentSlots;
 
         private static void Main(string[] args)
         {
@@ -46,28 +45,45 @@ namespace QualificationTask
 
                 int nbServerByGroup = serversCount / poolCount;
 
-                int c = 0;
                 IndexGenerator.SetIndex(0);
-                foreach (var server in servers.OrderByDescending(x => x.Score))
+
+                currentSlots = new int[rowsCount];
+
+                Group[] groups = (
+                    from g in Enumerable.Range(0, poolCount)
+                    select new Group())
+                    .ToArray();
+
+                foreach (var server in servers)
                 {
-                    FindServerPlace(server, unuvailable, slotsCount);
+                    var group = groups.OrderBy(x => x.TotalCapacity).First();
 
-                    if (currentRow >= rowsCount) // No more rows available
-                    {
-                        server.Unused = true;
-                        c ++;
-                        continue;
-                    }
+                    server.Group = group;
 
-
-                    server.Row = currentRow;
-                    server.Slot = currentSlot;
-
-                    currentSlot += server.Size;
-                    currentCpuInRow += server.Capacity;
-
+                    group.Servers.Add(server);
                 }
 
+                var test1 = groups.Min(x => x.TotalCapacity);
+                var test2 = groups.Max(x => x.TotalCapacity);
+
+                foreach (var group in groups)
+                {
+                    var server = group.Servers
+                        .Where(x => x.Unused)
+                        .OrderByDescending(x => x.Score)
+                        .First();
+
+                    FindServerPlace(server, unuvailable, slotsCount);
+
+                    server.Row = currentRow;
+                    server.Slot = currentSlots[currentRow];
+                    server.Unused = false;
+
+                    currentSlots[currentRow] += server.Size;
+
+                    currentRow = (currentRow + 1) % rowsCount;
+                }
+                    
                 foreach (var server in servers.OrderBy(x => x.Index))
                 {
                     int group = IndexGenerator.GetIndex() % poolCount;
@@ -89,20 +105,19 @@ namespace QualificationTask
 
             var hasUnavailableCell = (
                 from u in unAvailable
-                where u.Row == currentRow && currentSlot <= u.Slot && u.Slot < currentSlot + server.Size
+                where u.Row == currentSlots[currentRow] && currentSlots[currentRow] <= u.Slot && u.Slot < currentSlots[currentRow] + server.Size
                 select u)
                 .FirstOrDefault();
 
             if (hasUnavailableCell != null) // Can not put a server because of unvavailability
             {
-                currentSlot = hasUnavailableCell.Slot + 1;
+                currentSlots[currentRow] = hasUnavailableCell.Slot + 1;
                 hasError = true;
             }
 
-            if (currentSlot + server.Size > slotsCount) // Slot limit reached
+
+            if (currentSlots[currentRow] + server.Size > slotsCount) // Slot limit reached
             {
-                currentSlot = 0;
-                currentCpuInRow = 0;
                 currentRow++;
                 hasError = true;
             }

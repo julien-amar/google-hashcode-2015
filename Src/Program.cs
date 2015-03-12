@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using QualificationTask.Model;
@@ -16,26 +16,6 @@ namespace QualificationTask
         private static int currentRow = 0;
         private static int[] currentSlots;
         private static bool[] fullRows;
-        private static Color[] groupColors ;
-        private static Group[] groups;
-
-        private static void ExportMatrixtoBitmap(Server[,] matrix, int nbInstruction)
-        {
-            var outputFile = nbInstruction.ToString("000000000") + ".bmp";
-
-            matrix.ToBitmap(
-                outputFile,
-                ColorExport,
-                false);
-        }
-
-        private static Color ColorExport(Server cell)
-        {
-            var index = groups.ToList().IndexOf(cell.Group);
-
-            return groupColors[index];
-
-        }
 
         private static void Main(string[] args)
         {
@@ -66,14 +46,6 @@ namespace QualificationTask
                               .Select(x => new Server(IndexGenerator.GetIndex(), x[0], x[1]))
                               .ToList();
 
-                Server[,] datacenter = new Server[rowsCount, slotsCount];
-                 groupColors = new Color[poolCount];
-
-                for (int i = 0; i < poolCount; i++)
-                {
-                    groupColors[i] = Color.FromKnownColor((KnownColor)i);
-                }
-
                 int nbServerByGroup = serversCount / poolCount;
 
                 IndexGenerator.SetIndex(0);
@@ -81,7 +53,7 @@ namespace QualificationTask
                 currentSlots = new int[rowsCount];
                 fullRows = new bool[rowsCount];
 
-                groups = (
+                Group[] groups = (
                     from g in Enumerable.Range(0, poolCount)
                     select new Group())
                     .ToArray();
@@ -107,9 +79,15 @@ namespace QualificationTask
                             .OrderByDescending(x => x.Score)
                             .First();
 
+                        int index = servers.ToList().IndexOf(server);
+
                         fullRows[currentRow] = currentSlots[currentRow] == rowsCount;
- 
+
+                        int t = currentRow;
+
                         FindServerPlace(server, unuvailable, slotsCount, rowsCount);
+
+                        currentRow = t;
 
                         currentRow = (currentRow + 1) % rowsCount;
                     }
@@ -136,7 +114,7 @@ namespace QualificationTask
 
             var hasUnavailableCell = (
                 from u in unAvailable
-                where u.Row == currentSlots[currentRow] && currentSlots[currentRow] <= u.Slot && u.Slot < currentSlots[currentRow] + server.Size
+                where u.Row == currentRow && currentSlots[currentRow] <= u.Slot && u.Slot < currentSlots[currentRow] + server.Size
                 select u)
                 .FirstOrDefault();
 

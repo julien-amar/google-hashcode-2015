@@ -11,6 +11,10 @@ namespace QualificationTask
 {
     class Program
     {
+        private static int currentSlot = 0;
+        private static int currentRow = 0;
+        private static int currentCpuInRow = 0;
+
         private static void Main(string[] args)
         {
             const string FILE_NAME = @"Samples/sample.in";
@@ -32,6 +36,7 @@ namespace QualificationTask
 
                 var unuvailable = (from i in Enumerable.Range(0, slotUnavailableCount)
                                    select reader.ExtractValues<int>().ToArray())
+                                   .Select(x => new UnavailableCell(x[0], x[1]))
                                    .ToList();
 
                 var servers = (from i in Enumerable.Range(0, serversCount)
@@ -39,23 +44,13 @@ namespace QualificationTask
                               .Select(x => new Server(IndexGenerator.GetIndex(), x[0], x[1]))
                               .ToList();
 
-                int currentSlot = 0;
-                int currentRow = 0;
-                int currentCpuInRow = 0;
-                int cpu = 0;
-
                 int nbServerByGroup = serversCount / poolCount;
 
                 foreach (var server in servers)
                 {
-                    if (currentSlot + server.Slots > slotsCount) // Slot limit reached
-                    {
-                        currentSlot = 0;
-                        currentCpuInRow = 0;
-                        currentRow++;
-                    }
+                    FindServerPlace(server, unuvailable, slotsCount);
 
-                    if (currentRow >= rowsCount)
+                    if (currentRow >= rowsCount) // No more rows available
                     {
                         Console.WriteLine("x");
                         continue;
@@ -73,5 +68,32 @@ namespace QualificationTask
             }
         }
 
+        private static void FindServerPlace(Server server, List<UnavailableCell> unAvailable, int slotsCount)
+        {
+            bool hasError = false;
+
+            var hasUnavailableCell = (
+                from u in unAvailable
+                where u.Row == currentRow && currentSlot <= u.Slot && u.Slot < currentSlot + server.Slots
+                select u)
+                .FirstOrDefault();
+
+            if (hasUnavailableCell != null) // Can not put a server because of unvavailability
+            {
+                currentSlot = hasUnavailableCell.Slot + 1;
+                hasError = true;
+            }
+
+            if (currentSlot + server.Slots > slotsCount) // Slot limit reached
+            {
+                currentSlot = 0;
+                currentCpuInRow = 0;
+                currentRow++;
+                hasError = true;
+            }
+
+            if (hasError) // Could not place a server we check on next line or, next to unvavailable cell.
+                FindServerPlace(server, unAvailable, slotsCount);
+        }
     }
 }

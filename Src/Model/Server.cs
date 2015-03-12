@@ -8,12 +8,19 @@ namespace QualificationTask.Model
 {
     public class Server
     {
+        public enum StateEnum
+        {
+            Unused,
+            Used,
+            NeedAnalyze
+        }
+
         public Server(int index, int size, int capacity)
         {
             Index = index;
             Size = size;
             Capacity = capacity;
-            Unused = true;
+            State = StateEnum.NeedAnalyze;
         }
 
         public int Index { get; set; }
@@ -25,7 +32,7 @@ namespace QualificationTask.Model
 
         public Group Group { get; set; }
 
-        public bool Unused { get; set; }
+        public StateEnum State { get; set; }
 
         public float Score
         {

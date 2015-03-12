@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using QualificationTask.Model;
@@ -13,6 +15,27 @@ namespace QualificationTask
     {
         private static int currentRow = 0;
         private static int[] currentSlots;
+        private static bool[] fullRows;
+        private static Color[] groupColors ;
+        private static Group[] groups;
+
+        private static void ExportMatrixtoBitmap(Server[,] matrix, int nbInstruction)
+        {
+            var outputFile = nbInstruction.ToString("000000000") + ".bmp";
+
+            matrix.ToBitmap(
+                outputFile,
+                ColorExport,
+                false);
+        }
+
+        private static Color ColorExport(Server cell)
+        {
+            var index = groups.ToList().IndexOf(cell.Group);
+
+            return groupColors[index];
+
+        }
 
         private static void Main(string[] args)
         {
@@ -43,13 +66,22 @@ namespace QualificationTask
                               .Select(x => new Server(IndexGenerator.GetIndex(), x[0], x[1]))
                               .ToList();
 
+                Server[,] datacenter = new Server[rowsCount, slotsCount];
+                 groupColors = new Color[poolCount];
+
+                for (int i = 0; i < poolCount; i++)
+                {
+                    groupColors[i] = Color.FromKnownColor((KnownColor)i);
+                }
+
                 int nbServerByGroup = serversCount / poolCount;
 
                 IndexGenerator.SetIndex(0);
 
                 currentSlots = new int[rowsCount];
+                fullRows = new bool[rowsCount];
 
-                Group[] groups = (
+                groups = (
                     from g in Enumerable.Range(0, poolCount)
                     select new Group())
                     .ToArray();
@@ -63,32 +95,31 @@ namespace QualificationTask
                     group.Servers.Add(server);
                 }
 
-                var test1 = groups.Min(x => x.TotalCapacity);
-                var test2 = groups.Max(x => x.TotalCapacity);
-
-                foreach (var group in groups)
+                while (servers.Any(x => x.State == Server.StateEnum.NeedAnalyze))
                 {
-                    var server = group.Servers
-                        .Where(x => x.Unused)
-                        .OrderByDescending(x => x.Score)
-                        .First();
+                    foreach (var group in groups)
+                    {
+                        if (group.Servers.Count(x => x.State == Server.StateEnum.NeedAnalyze) == 0)
+                            continue;
 
-                    FindServerPlace(server, unuvailable, slotsCount);
+                        var server = group.Servers
+                            .Where(x => x.State == Server.StateEnum.NeedAnalyze)
+                            .OrderByDescending(x => x.Score)
+                            .First();
 
-                    server.Row = currentRow;
-                    server.Slot = currentSlots[currentRow];
-                    server.Unused = false;
+                        fullRows[currentRow] = currentSlots[currentRow] == rowsCount;
+ 
+                        FindServerPlace(server, unuvailable, slotsCount, rowsCount);
 
-                    currentSlots[currentRow] += server.Size;
-
-                    currentRow = (currentRow + 1) % rowsCount;
+                        currentRow = (currentRow + 1) % rowsCount;
+                    }
                 }
-                    
+
                 foreach (var server in servers.OrderBy(x => x.Index))
                 {
-                    int group = IndexGenerator.GetIndex() % poolCount;
+                    var group = groups.ToList().IndexOf(server.Group);
 
-                    if (server.Unused)
+                    if (server.State == Server.StateEnum.Unused)
                         Console.WriteLine("x");
                     else
                         Console.WriteLine("{0} {1} {2}", server.Row, server.Slot, group);
@@ -99,7 +130,7 @@ namespace QualificationTask
             }
         }
 
-        private static void FindServerPlace(Server server, List<UnavailableCell> unAvailable, int slotsCount)
+        private static bool FindServerPlace(Server server, List<UnavailableCell> unAvailable, int slotsCount, int rowsCount)
         {
             bool hasError = false;
 
@@ -115,15 +146,28 @@ namespace QualificationTask
                 hasError = true;
             }
 
-
             if (currentSlots[currentRow] + server.Size > slotsCount) // Slot limit reached
             {
                 currentRow++;
                 hasError = true;
             }
 
-            if (hasError) // Could not place a server we check on next line or, next to unvavailable cell.
-                FindServerPlace(server, unAvailable, slotsCount);
+            if (hasError && currentRow >= rowsCount)
+            {
+                server.State = Server.StateEnum.Unused;
+                return false;
+            }
+            
+            if (hasError)
+                return FindServerPlace(server, unAvailable, slotsCount, rowsCount);
+
+            // Could not place a server we check on next line or, next to unvavailable cell.
+            server.Row = currentRow;
+            server.Slot = currentSlots[currentRow];
+            server.State = Server.StateEnum.Used;
+
+            currentSlots[currentRow] += server.Size;
+            return true;
         }
     }
 }

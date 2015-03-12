@@ -18,5 +18,6 @@ namespace QualificationTask.Model
         public int Index { get; set; }
         public int Slots { get; set; }
         public int Capacity { get; set; }
+        public int Group { get; set; }
     }
 }

@@ -17,7 +17,7 @@ namespace QualificationTask
 
         private static void Main(string[] args)
         {
-            const string FILE_NAME = @"Samples/sample.in";
+            const string FILE_NAME = @"Samples/dc.in";
 
             StringBuilder sbOut = new StringBuilder();
 
@@ -48,6 +48,8 @@ namespace QualificationTask
 
                 foreach (var server in servers)
                 {
+                    int group = IndexGenerator.GetIndex() % poolCount;
+
                     FindServerPlace(server, unuvailable, slotsCount);
 
                     if (currentRow >= rowsCount) // No more rows available
@@ -57,7 +59,7 @@ namespace QualificationTask
                     }
 
                     // filling current slot
-                    Console.WriteLine("{0} {1} {2}", currentRow, currentSlot, server.Index / nbServerByGroup);
+                    Console.WriteLine("{0} {1} {2}", currentRow, currentSlot, group);
 
                     currentSlot += server.Slots;
                     currentCpuInRow += server.Capacity;

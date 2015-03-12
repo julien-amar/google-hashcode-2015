@@ -39,6 +39,35 @@ namespace QualificationTask
                               .Select(x => new Server(IndexGenerator.GetIndex(), x[0], x[1]))
                               .ToList();
 
+                int currentSlot = 0;
+                int currentRow = 0;
+                int currentCpuInRow = 0;
+                int cpu = 0;
+
+                int nbServerByGroup = serversCount / poolCount;
+
+                foreach (var server in servers)
+                {
+                    if (currentSlot + server.Slots > slotsCount) // Slot limit reached
+                    {
+                        currentSlot = 0;
+                        currentCpuInRow = 0;
+                        currentRow++;
+                    }
+
+                    if (currentRow >= rowsCount)
+                    {
+                        Console.WriteLine("x");
+                        continue;
+                    }
+
+                    // filling current slot
+                    Console.WriteLine("{0} {1} {2}", currentRow, currentSlot, server.Index / nbServerByGroup);
+
+                    currentSlot += server.Slots;
+                    currentCpuInRow += server.Capacity;
+                }
+
                 reader.Close();
                 inputStream.Close();
             }

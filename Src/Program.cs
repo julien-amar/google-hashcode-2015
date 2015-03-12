@@ -46,6 +46,7 @@ namespace QualificationTask
 
                 int nbServerByGroup = serversCount / poolCount;
 
+                IndexGenerator.SetIndex(0);
                 foreach (var server in servers)
                 {
                     int group = IndexGenerator.GetIndex() % poolCount;

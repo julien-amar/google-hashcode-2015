@@ -46,24 +46,36 @@ namespace QualificationTask
 
                 int nbServerByGroup = serversCount / poolCount;
 
+                int c = 0;
                 IndexGenerator.SetIndex(0);
-                foreach (var server in servers)
+                foreach (var server in servers.OrderByDescending(x => x.Score))
                 {
-                    int group = IndexGenerator.GetIndex() % poolCount;
-
                     FindServerPlace(server, unuvailable, slotsCount);
 
                     if (currentRow >= rowsCount) // No more rows available
                     {
-                        Console.WriteLine("x");
+                        server.Unused = true;
+                        c ++;
                         continue;
                     }
 
-                    // filling current slot
-                    Console.WriteLine("{0} {1} {2}", currentRow, currentSlot, group);
 
-                    currentSlot += server.Slots;
+                    server.Row = currentRow;
+                    server.Slot = currentSlot;
+
+                    currentSlot += server.Size;
                     currentCpuInRow += server.Capacity;
+
+                }
+
+                foreach (var server in servers.OrderBy(x => x.Index))
+                {
+                    int group = IndexGenerator.GetIndex() % poolCount;
+
+                    if (server.Unused)
+                        Console.WriteLine("x");
+                    else
+                        Console.WriteLine("{0} {1} {2}", server.Row, server.Slot, group);
                 }
 
                 reader.Close();
@@ -77,7 +89,7 @@ namespace QualificationTask
 
             var hasUnavailableCell = (
                 from u in unAvailable
-                where u.Row == currentRow && currentSlot <= u.Slot && u.Slot < currentSlot + server.Slots
+                where u.Row == currentRow && currentSlot <= u.Slot && u.Slot < currentSlot + server.Size
                 select u)
                 .FirstOrDefault();
 
@@ -87,7 +99,7 @@ namespace QualificationTask
                 hasError = true;
             }
 
-            if (currentSlot + server.Slots > slotsCount) // Slot limit reached
+            if (currentSlot + server.Size > slotsCount) // Slot limit reached
             {
                 currentSlot = 0;
                 currentCpuInRow = 0;

@@ -8,14 +8,14 @@ namespace QualificationTask
 {
     public class IndexGenerator
     {
-        private static int _index = 0;
+        private int _index = 0;
 
-        public static void SetIndex(int index)
+        public void SetIndex(int index)
         {
             _index = index;
         }
 
-        public static int GetIndex()
+        public int GetIndex()
         {
             return _index++;
         }

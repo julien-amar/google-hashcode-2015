@@ -38,6 +38,7 @@
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
@@ -47,9 +48,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extensions\ConcurrentInvertedIndex.cs" />
-    <Compile Include="Extensions\ConsoleExtensions.cs" />
-    <Compile Include="Extensions\Helpers.cs" />
+    <Compile Include="DataModel.cs" />
+    <Compile Include="Extensions\StreamReaderExtensions.cs" />
     <Compile Include="IndexGenerator.cs" />
     <Compile Include="Model\Group.cs" />
     <Compile Include="Model\Server.cs" />

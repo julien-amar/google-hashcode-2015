@@ -27,12 +27,17 @@ namespace QualificationTask
                     {
                         var server = Servers.Single(s => s.Row == y && s.Slot == x && s.State == Server.StateEnum.Used);
 
-                        Console.Write("[");
+                        if (server.Size == 1)
+                            Console.Write("O");
+                        else
+                        {
+                            Console.Write("[");
 
-                        for (int s = 1; s < server.Size - 1; ++s)
-                            Console.Write("=");
+                            for (int s = 1; s < server.Size - 1; ++s)
+                                Console.Write("=");
 
-                        Console.Write("]");
+                            Console.Write("]");
+                        }
 
                         x += server.Size - 1;
                     }

@@ -83,8 +83,8 @@ namespace QualificationTask
 
             var groups = SplitServerInGroups(data);
 
-            foreach (var group in groups)
-                group.Dump();
+            //foreach (var group in groups)
+                //group.Dump();
 
             PlaceServers(data, groups);
 
@@ -98,38 +98,85 @@ namespace QualificationTask
                     Console.WriteLine("{0} {1} {2}", server.Row, server.Slot, group);
             }
 
+            /*
             data.Dump();
+
+            var serverbyrow = data.Servers.Where(s=>s.State == Server.StateEnum.Used).GroupBy(s => s.Row);
+
+            foreach (var servers in serverbyrow.OrderBy(x => x.Key))
+            {
+                Console.WriteLine("row : " + servers.Key);
+
+                var bygroups = servers.GroupBy(x => x.Group);
+
+                foreach (var g in bygroups.OrderBy(x => x.Key.Index))
+                {
+                    Console.WriteLine("group #" + g.Key.Index + " total capacity " + g.Key.GetUsedCapacity(servers.Key));
+                }
+            }
+
+            foreach (var group in groups)
+                group.Dump();
+            */
         }
 
         private static void PlaceServers(DataModel data, Group[] groups)
         {
-            while (data.Servers.Any(x => x.State == Server.StateEnum.NeedAnalyze))
-            {
-                foreach (var group in groups)
+                for (int row = 0; row < data.RowsCount; ++row )
                 {
-                    if (@group.Servers.Count(x => x.State == Server.StateEnum.NeedAnalyze) == 0)
-                        continue;
+                    //Console.WriteLine("Analyse row #" + row);
 
-                    var server = @group.Servers
-                        .Where(x => x.State == Server.StateEnum.NeedAnalyze)
-                        .OrderByDescending(x => x.Score)
-                        .First();
+                    while (data.Servers.Any(x => x.State == Server.StateEnum.NeedAnalyze))
+                    {
+                        var reste = data.Servers.Count(x => x.State == Server.StateEnum.NeedAnalyze);
 
-                    int t = currentRow;
+                        currentRow = row;
 
-                    FindServerPlace(server, data);
+                        var lessRepresentedGroup =
+                            groups
+                            .Where(x => x.Servers.Any(s => s.State == Server.StateEnum.NeedAnalyze))
+                            .OrderBy(x => x.GetUsedCapacity(row))
+                            .ThenBy(x => x.Servers.Where(s => s.State == Server.StateEnum.NeedAnalyze).Max(y => y.Score))
+                            .FirstOrDefault();
 
-                    currentRow = t;
+                        if (lessRepresentedGroup == null)
+                        {
+                            break;
+                        }
 
-                    currentRow = (currentRow + 1)%data.RowsCount;
+                        var server = lessRepresentedGroup.Servers
+                            .Where(x => x.State == Server.StateEnum.NeedAnalyze)
+                            .OrderByDescending(x => x.Score)
+                            .First();
+
+                        var canPutInRow = FindServerPlace(server, data);
+
+                        if (canPutInRow)
+                        {
+                            server.Row = currentRow;
+                            server.Slot = currentSlots[currentRow];
+                            server.State = Server.StateEnum.Used;
+
+                            currentSlots[currentRow] += server.Size;
+                        }
+                        else
+                        {
+                            server.State = Server.StateEnum.Ignore;
+                        }
+                    }
+
+                    foreach (var server in data.Servers)
+                        if (server.State == Server.StateEnum.Ignore)
+                            server.State = Server.StateEnum.NeedAnalyze;
                 }
-            }
+
+            foreach (var server in data.Servers)
+                    if (server.State == Server.StateEnum.NeedAnalyze)
+                        server.State = Server.StateEnum.Unused;
         }
 
         private static bool FindServerPlace(Server server, DataModel data)
         {
-            bool hasError = false;
-
             var hasUnavailableCell = (
                 from u in data.Unavailable
                 where u.Row == currentRow && currentSlots[currentRow] <= u.Slot && u.Slot < currentSlots[currentRow] + server.Size
@@ -139,33 +186,17 @@ namespace QualificationTask
             if (hasUnavailableCell != null) // Can not put a server because of unvavailability
             {
                 currentSlots[currentRow] = hasUnavailableCell.Slot + 1;
-                hasError = true;
+
+                return FindServerPlace(server, data);
             }
 
             if (currentSlots[currentRow] + server.Size > data.SlotsCount) // Slot limit reached
             {
-                currentRow++;
-                hasError = true;
-            }
-
-            if (hasError && currentRow >= data.RowsCount)
-            {
-                server.State = Server.StateEnum.Unused;
                 return false;
             }
-            
-            if (hasError)
-                return FindServerPlace(server, data);
 
             // Could not place a server we check on next line or, next to unvavailable cell.
-            server.Row = currentRow;
-            server.Slot = currentSlots[currentRow];
-            server.State = Server.StateEnum.Used;
-
-            currentSlots[currentRow] += server.Size;
             return true;
         }
-
-    
     }
 }

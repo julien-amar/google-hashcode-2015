@@ -12,7 +12,8 @@ namespace QualificationTask.Model
         {
             Unused,
             Used,
-            NeedAnalyze
+            NeedAnalyze,
+            Ignore
         }
 
         public Server(int index, int size, int capacity)

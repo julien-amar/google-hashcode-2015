@@ -100,18 +100,14 @@ namespace QualificationTask
 
             /*
             data.Dump();
-
-            var serverbyrow = data.Servers.Where(s=>s.State == Server.StateEnum.Used).GroupBy(s => s.Row);
-
-            foreach (var servers in serverbyrow.OrderBy(x => x.Key))
+            
+            for (int row = 0; row < data.RowsCount; ++row)
             {
-                Console.WriteLine("row : " + servers.Key);
+                Console.WriteLine("row : " + row);
 
-                var bygroups = servers.GroupBy(x => x.Group);
-
-                foreach (var g in bygroups.OrderBy(x => x.Key.Index))
+                for (int group = 0; group < data.PoolCount; ++group)
                 {
-                    Console.WriteLine("group #" + g.Key.Index + " total capacity " + g.Key.GetUsedCapacity(servers.Key));
+                    Console.WriteLine("group #" + group + " total capacity " + groups[group].GetUsedCapacity(row));
                 }
             }
 
@@ -135,8 +131,10 @@ namespace QualificationTask
                         var lessRepresentedGroup =
                             groups
                             .Where(x => x.Servers.Any(s => s.State == Server.StateEnum.NeedAnalyze))
-                            .OrderBy(x => x.GetUsedCapacity(row))
+                            //.OrderBy(x => x.GetUsedCapacity(row))
+                            .OrderBy(x => x.UsedCapacity)
                             .ThenBy(x => x.Servers.Where(s => s.State == Server.StateEnum.NeedAnalyze).Max(y => y.Score))
+                            .ThenBy(x => x.Servers.Where(s => s.State == Server.StateEnum.NeedAnalyze).Min(y => y.Size))
                             .FirstOrDefault();
 
                         if (lessRepresentedGroup == null)
@@ -147,6 +145,7 @@ namespace QualificationTask
                         var server = lessRepresentedGroup.Servers
                             .Where(x => x.State == Server.StateEnum.NeedAnalyze)
                             .OrderByDescending(x => x.Score)
+                            .ThenBy(x => x.Size)
                             .First();
 
                         var canPutInRow = FindServerPlace(server, data);

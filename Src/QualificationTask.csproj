@@ -48,7 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Model\DataModel.cs" />
+    <Compile Include="Model\DataCenter.cs" />
     <Compile Include="Extensions\StreamReaderExtensions.cs" />
     <Compile Include="Utils\IndexGenerator.cs" />
     <Compile Include="Model\Group.cs" />

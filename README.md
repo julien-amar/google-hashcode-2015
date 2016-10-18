@@ -1,7 +1,8 @@
 # google-hashcode-2015-qualification
-Google HashCode 2015 - Qualification Round  
-
-https://docs.google.com/file/d/0B8xe9y1rGAQXWE9hYXBFb0kxMkk
+Google HashCode 2015 - Qualification Round (**Optimize a Data Center**)  
+  
+**Site** : https://docs.google.com/file/d/0B8xe9y1rGAQXWE9hYXBFb0kxMkk  
+**Subject** : [Download](https://github.com/julien-amar/google-hashcode-2015-qualification/blob/master/Subject/qualification_task_en_20150312_1756.pdf?raw=true)  
 
 ## Solution
 
